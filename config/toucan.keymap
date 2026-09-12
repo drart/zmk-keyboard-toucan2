@@ -4,17 +4,58 @@
 #include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/zmk/pointing.h>
 
-#define BASE 0
-#define NAV  1
-#define SYM  2
-#define ADJ  3
+#define BASE  0
+#define NUM   1
+#define VIM   2
+#define SYM   3
+#define MOUSE 4
+#define FN    5
+#define BLE   6
 
 / {
-    conditional_layers {
-        compatible = "zmk,conditional-layers";
-        tri_layer {
-            if-layers = <1 2>;
-            then-layer = <3>;
+    combos {
+        compatible = "zmk,combos";
+        // Hold both "main" thumb keys (SPACE + RET) together to reach
+        // the BLE layer. They're physically adjacent -- the two
+        // innermost thumb keys -- so it's a natural chord.
+        combo_ble {
+            timeout-ms = <50>;
+            key-positions = <38 39>;
+            bindings = <&mo BLE>;
+            layers = <BASE>;
+        };
+    };
+
+    behaviors {
+        // Home-row mods.
+        // Mirrors kanata: (tap-hold $tap-time $hold-time key mod) with
+        // tap-time=150 hold-time=200.
+        // ZMK's "tap-preferred" flavor is a pure timer-based decision
+        // (a hold only fires once tapping-term-ms elapses; other keys
+        // pressed in the meantime do NOT force a hold) -- this is exactly
+        // how kanata's plain tap-hold behaves, and it's what gives it that
+        // fast, non-laggy feel instead of the "wait and see" delay you get
+        // from hold-preferred/balanced flavors.
+        hm: home_row_mod {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            tapping-term-ms = <200>;
+            quick-tap-ms = <150>;
+            flavor = "tap-preferred";
+            bindings = <&kp>, <&kp>;
+        };
+
+        // Layer-tap keys (tab / F17 / F18 / quote).
+        // Mirrors kanata's (tap-hold 150 150 ...) -- tap-time == hold-time,
+        // so the layer engages the instant 150ms is up, and tap fires
+        // instantly on release before that.
+        lt_fast: layer_tap_fast {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            tapping-term-ms = <150>;
+            quick-tap-ms = <150>;
+            flavor = "tap-preferred";
+            bindings = <&mo>, <&kp>;
         };
     };
 
@@ -24,59 +65,76 @@
         base {
             display-name = "BASE";
             bindings = <
-                &kp TAB   &kp Q &kp W &kp E &kp R &kp T   &kp Y &kp U  &kp I     &kp O   &kp P    &kp BSPC
-                &kp LCTRL &kp A &kp S &kp D &kp F &kp G   &kp H &kp J  &kp K     &kp L   &kp SEMI &kp SQT
-                &kp LSHFT &kp Z &kp X &kp C &kp V &kp B   &kp N &kp M  &kp COMMA &kp DOT &kp FSLH &kp ESC
-                                &kp LGUI &mo 1 &kp SPACE   &kp RET &mo 2 &kp RALT
+                &kp ESC          &kp Q            &kp W            &kp E            &kp R          &kp T       &kp Y   &kp U            &kp I            &kp O             &kp P              &kp BSPC
+                &lt_fast VIM TAB &hm LCTRL A      &hm LSHFT S      &hm LALT D       &hm LGUI F     &kp G       &kp H   &hm RGUI J       &hm RALT K       &hm RSHFT L       &hm RCTRL SEMI     &kp SQT
+                &kp GRAVE        &kp Z            &kp X            &kp C            &kp V          &kp B       &kp N   &kp M            &kp COMMA        &kp DOT           &kp FSLH           &kp BSLH
+                                                   &none            &lt_fast SYM F17 &kp SPACE      &kp RET     &lt_fast NUM F18 &mo FN
             >;
         };
 
-        nav {
-            display-name = "NAV";
+        num {
+            display-name = "NUM";
             bindings = <
-                &kp TAB     &kp N1          &kp N2       &kp N3       &kp N4       &kp N5         &kp N6   &kp N7   &kp N8 &kp N9    &kp N0 &kp BSPC
-                &bt BT_CLR  &bt BT_SEL 0    &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &kp LEFT &kp DOWN &kp UP &kp RIGHT &trans &trans
-                &kp LSHFT   &studio_unlock  &trans       &trans       &trans       &trans         &trans   &trans   &trans &trans    &trans &trans
-                                                &kp LGUI     &trans       &kp SPACE      &kp RET  &trans   &kp RALT
+                &trans   &trans  &trans  &trans  &trans  &trans      &trans     &trans       &trans       &trans     &trans    &trans
+                &trans   &kp N1  &kp N2  &kp N3  &kp N4  &kp N5      &kp C_RW   &kp C_VOL_DN &kp C_VOL_UP &kp C_FF   &trans    &trans
+                &trans   &kp N6  &kp N7  &kp N8  &kp N9  &kp N0      &trans     &trans       &trans       &trans     &trans    &trans
+                                          &trans  &trans  &trans      &trans     &trans       &trans
+            >;
+        };
+
+        vim {
+            display-name = "VIM";
+            bindings = <
+                &trans   &trans  &trans  &trans  &trans  &trans      &trans    &trans     &trans   &trans      &trans  &trans
+                &trans   &trans  &trans  &trans  &trans  &trans      &kp LEFT  &kp DOWN   &kp UP   &kp RIGHT   &trans  &trans
+                &trans   &trans  &trans  &trans  &trans  &trans      &trans    &trans     &trans   &trans      &trans  &trans
+                                          &trans  &trans  &kp C_PP    &kp C_MUTE &trans    &trans
             >;
         };
 
         sym {
             display-name = "SYM";
             bindings = <
-                &kp TAB   &kp EXCL &kp AT &kp HASH &kp DLLR &kp PRCNT   &kp CARET &kp AMPS  &kp KP_MULTIPLY &kp LPAR &kp RPAR &kp BSPC
-                &kp LCTRL &trans   &trans &trans   &trans   &trans      &kp MINUS &kp EQUAL &kp LBKT        &kp RBKT &kp BSLH &kp GRAVE
-                &kp LSHFT &trans   &trans &trans   &trans   &trans      &kp UNDER &kp PLUS  &kp LBRC        &kp RBRC &kp PIPE &kp TILDE
-                                          &kp LGUI &trans   &kp SPACE   &kp RET   &trans    &kp RALT
-            >;
-        };
-
-        adj {
-            display-name = "ADJ";
-            bindings = <
-                &mo TAB   &trans &kp F7 &kp F8 &kp F9 &kp F12   &kp C_VOL_DN &kp C_MUTE  &kp C_VOL_UP &trans &trans &kp BSPC
-                &kp LCTRL &trans &kp F4 &kp F5 &kp F6 &kp F11   &trans       &trans      &trans       &trans &trans &trans
-                &bt LSHFT &trans &kp F1 &kp F2 &kp F3 &kp F10   &trans       &trans      &trans       &trans &trans &trans
-                                   &kp LGUI &mo NAV &kp SPACE   &kp RET &mo 2 &kp RALT
+                &trans   &trans  &trans    &trans     &trans     &trans        &trans     &trans     &trans     &trans   &trans  &trans
+                &trans   &trans  &kp LBKT  &kp LPAR   &kp LBRC   &kp EQUAL     &kp PLUS   &kp RBRC   &kp RPAR   &kp RBKT &trans  &trans
+                &trans   &trans  &trans    &trans     &trans     &kp UNDER     &kp MINUS  &trans     &trans     &trans   &trans  &trans
+                                            &trans     &trans     &trans        &trans     &trans     &trans
             >;
         };
 
         mouse {
-            display-name = "MOU";
+            // Auto-activated by the trackpad hardware itself while a
+            // finger is touching it (is_touching_processor -> &mo 4 in
+            // toucan.dtsi) -- not something reached by a key. Thumb keys
+            // become click buttons for the duration of the touch, mirroring
+            // stock Toucan2's "MOU" layer.
+            display-name = "MOUSE";
             bindings = <
                 &trans &trans &trans &trans &trans &trans           &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans &trans &trans           &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans &trans &trans           &trans &trans &trans &trans &trans &trans
-                            &mkp MCLK &mkp LCLK &mkp RCLK           &mkp LCLK &mkp RCLK &mkp MCLK
+                            &mkp RCLK &mkp MCLK &mkp LCLK           &mkp LCLK &mkp MCLK &mkp RCLK
             >;
         };
 
-        extra_2 {
-                status = "reserved";
+        fn {
+            display-name = "FN";
+            bindings = <
+                &trans  &trans  &trans  &trans  &kp F11  &kp F12      &trans  &trans  &trans  &trans  &trans  &trans
+                &trans  &kp F1  &kp F2  &kp F3  &kp F4   &kp F5       &trans  &trans  &trans  &trans  &trans  &trans
+                &trans  &kp F6  &kp F7  &kp F8  &kp F9   &kp F10      &trans  &trans  &trans  &trans  &trans  &trans
+                                         &trans  &trans   &trans       &trans  &trans  &trans
+            >;
         };
 
-        extra_3 {
-                status = "reserved";
+        ble {
+            display-name = "BLE";
+            bindings = <
+                &trans  &trans        &trans        &trans        &trans        &trans          &trans  &trans  &trans     &trans  &trans  &bt BT_CLR_ALL
+                &trans  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4    &trans  &trans  &bt BT_CLR &trans  &trans  &trans
+                &trans  &trans        &trans        &trans        &trans        &trans          &trans  &trans  &trans     &trans  &trans  &trans
+                                                     &trans        &trans        &trans          &trans  &trans  &trans
+            >;
         };
     };
 };
