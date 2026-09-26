@@ -131,6 +131,7 @@
 #endif
         };
 
+   };
 
     split_inputs {
         #address-cells = <1>;
