@@ -126,8 +126,8 @@
             // Windows: Task View, prev desktop, show desktop, next desktop
             bindings = <&kp LG(TAB)>, <&kp LC(LG(LEFT))>, <&kp LG(D)>, <&kp LC(LG(RIGHT))>;
 #else
-            // macOS: Mission Control, prev Space, App Expose, next Space
-            bindings = <&kp LC(UP)>, <&kp LC(LEFT)>, <&kp LC(DOWN)>, <&kp LC(RIGHT)>;
+            // macOS: Mission Control, next Space, App Expose, previous Space
+            bindings = <&kp LC(UP)>, <&kp LC(RIGHT)>, <&kp LC(DOWN)>, <&kp LC(LEFT)>;
 #endif
         };
 
